@@ -1,0 +1,19 @@
+---
+source: tests/tests.rs
+expression: kitchen_sink
+info:
+  default_ignored: ~
+  ignore_ignored: ~
+  no_ignore_displayed: ~
+  ignore_if_ignored: false
+  ignore_if_displayed: false
+  password_is_hidden: hunter2
+  wrapped_display: NotWrapped
+---
+KitchenSink {
+    no_ignore_displayed: (),
+    ignore_if_displayed: false,
+    password_is_hidden: "<hidden>",
+    wrapped_display: Wrapped,
+    ..
+}

@@ -1,0 +1,11 @@
+---
+source: tests/tests.rs
+expression: basic
+info:
+  default: false
+  not_default: true
+---
+Basic {
+    not_default: true,
+    ..
+}

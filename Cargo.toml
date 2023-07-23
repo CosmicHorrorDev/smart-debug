@@ -1,0 +1,23 @@
+[package]
+name = "smart-debug"
+version = "0.0.1"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+rust-version = "1.65.0"
+keywords = ["debug", "derive", "formatting"]
+categories = ["value-formatting"]
+description = "Derive macro for `Debug` with easy manipulation of fields"
+repository = "https://github.com/CosmicHorrorDev/smart-debug"
+homepage = "https://github.com/CosmicHorrorDev/smart-debug"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro2 = "1.0.59"
+quote = "1.0.28"
+syn = { version = "2.0.18", features = ["extra-traits"] }
+
+[dev-dependencies]
+insta = { version = "1.31.0", features = ["serde"] }
+serde = { version = "1.0.174", features = ["derive"] }
