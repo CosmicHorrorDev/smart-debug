@@ -22,10 +22,7 @@ pub struct Attrs {
 impl Attrs {
     pub fn parse(attrs: &[Attribute]) -> syn::Result<Self> {
         let mut parsed = Vec::new();
-        for attr in attrs
-            .into_iter()
-            .filter(|attr| attr.path().is_ident("debug"))
-        {
+        for attr in attrs.iter().filter(|attr| attr.path().is_ident("debug")) {
             for attr in attr.parse_args_with(Punctuated::<Attr, Token![,]>::parse_terminated)? {
                 parsed.push(attr);
             }
