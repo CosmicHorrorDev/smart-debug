@@ -58,3 +58,26 @@ fn kitchen_sink() {
         insta::assert_debug_snapshot!(kitchen_sink)
     });
 }
+
+#[test]
+fn format_str() {
+    #[derive(Serialize, SmartDebug, Default)]
+    struct FormatStrs {
+        #[debug("0x{:x}")]
+        hex: u64,
+        #[debug("{}")]
+        display: &'static str,
+        #[debug("I am the text")]
+        just_text: (),
+    }
+
+    let format_strs = FormatStrs {
+        hex: 0x1234abcd,
+        display: "You'll see unescaped quotes -> \"\"\"",
+        just_text: (),
+    };
+
+    insta::with_settings!({ info => &format_strs }, {
+        insta::assert_debug_snapshot!(format_strs)
+    });
+}

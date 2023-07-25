@@ -9,11 +9,17 @@ use syn::{
     Attribute, Expr, Ident, LitStr, Token,
 };
 
+// TODO: make bare and wrapper exclusive
 #[derive(Clone, Debug, Default)]
 pub struct Attrs {
-    pub bare: Option<LitStr>,
+    pub bare_or_wrapper: Option<BareOrWrapper>,
     pub ignore: Option<Ignore>,
-    pub wrapper: Option<AttrValue>,
+}
+
+#[derive(Clone, Debug)]
+pub enum BareOrWrapper {
+    Bare(LitStr),
+    Wrapper(AttrValue),
 }
 
 #[derive(Clone, Debug)]
@@ -51,7 +57,7 @@ impl TryFrom<Vec<Attr>> for Attrs {
             // Validate
             match name {
                 AttrName::Valuefull(ValuefullName::Bare) => {
-                    assert!(attrs.bare.is_none());
+                    assert!(attrs.bare_or_wrapper.is_none());
                 }
                 AttrName::Valueless(
                     ValuelessName::Ignore | ValuelessName::IgnoreDefault | ValuelessName::NoIgnore,
@@ -60,7 +66,7 @@ impl TryFrom<Vec<Attr>> for Attrs {
                     assert!(attrs.ignore.is_none());
                 }
                 AttrName::Valuefull(ValuefullName::Wrapper) => {
-                    assert!(attrs.wrapper.is_none());
+                    assert!(attrs.bare_or_wrapper.is_none());
                 }
             }
 
@@ -71,11 +77,13 @@ impl TryFrom<Vec<Attr>> for Attrs {
                     match valuefull {
                         ValuefullName::Bare => {
                             let AttrValue::LitStr(lit) = value else { unreachable!() };
-                            attrs.bare = Some(lit);
+                            attrs.bare_or_wrapper = Some(BareOrWrapper::Bare(lit));
                         }
                         ValuefullName::IgnoreFn => attrs.ignore = Some(Ignore::Fn(value)),
                         ValuefullName::IgnoreIf => attrs.ignore = Some(Ignore::If(value)),
-                        ValuefullName::Wrapper => attrs.wrapper = Some(value),
+                        ValuefullName::Wrapper => {
+                            attrs.bare_or_wrapper = Some(BareOrWrapper::Wrapper(value));
+                        }
                     }
                 }
                 AttrName::Valueless(valueless) => match valueless {

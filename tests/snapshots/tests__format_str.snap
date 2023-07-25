@@ -1,0 +1,13 @@
+---
+source: tests/tests.rs
+expression: format_strs
+info:
+  hex: 305441741
+  display: "You'll see unescaped quotes -> \"\"\""
+  just_text: ~
+---
+FormatStrs {
+    hex: 0x1234abcd,
+    display: You'll see unescaped quotes -> """,
+    just_text: "I am the text",
+}

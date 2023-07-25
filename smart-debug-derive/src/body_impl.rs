@@ -74,9 +74,8 @@ fn body_tt(fields: &Fields, global_ignore: &Option<container::Ignore>) -> Result
                 .map(|field| {
                     let field_name = &field.ident;
                     let field::Attrs {
-                        bare,
+                        bare_or_wrapper,
                         ignore: field_ignore,
-                        wrapper,
                     } = field::Attrs::parse(&field.attrs)?;
                     let ignore = Ignore::new(global_ignore, field_ignore);
                     let maybe_cond = match ignore {
@@ -95,16 +94,42 @@ fn body_tt(fields: &Fields, global_ignore: &Option<container::Ignore>) -> Result
                         Ignore::Fn(value) => Some(quote! { #value(&self.#field_name) }),
                     };
 
-                    let field_tokens = if let Some(bare) = bare {
-                        quote! { &#bare }
-                    } else {
-                        quote! { &self.#field_name }
-                    };
+                    let field_tokens = match bare_or_wrapper {
+                        Some(field::BareOrWrapper::Bare(bare)) => {
+                            let bare_str = bare.value();
+                            let mut was_interpol_start = false;
+                            let mut char_it = bare_str.chars();
+                            let has_interpol = loop {
+                                let Some(curr) = char_it.next() else {
+                                    break false;
+                                };
 
-                    let wrapped_field = if let Some(wrapper) = wrapper {
-                        quote! { &#wrapper(#field_tokens) }
-                    } else {
-                        field_tokens
+                                let is_interpol_start = curr == '{' && !was_interpol_start;
+                                if is_interpol_start {
+                                    // Make sure the next char isn't escaping this one
+                                    if char_it.clone().next() != Some('{') {
+                                        break true;
+                                    }
+                                }
+
+                                was_interpol_start = is_interpol_start;
+                            };
+
+                            // Use `format_args!()` if it's an interpolated str
+                            if has_interpol {
+                                quote! {
+                                    ::smart_debug::wrappers::__private::__DebugArgs(
+                                        format_args!(#bare, &self.#field_name)
+                                    )
+                                }
+                            } else {
+                                quote! { &#bare }
+                            }
+                        }
+                        Some(field::BareOrWrapper::Wrapper(wrapper)) => {
+                            quote! { #wrapper(&self.#field_name) }
+                        }
+                        None => quote! { self.#field_name },
                     };
 
                     let field_name_str = field_name.as_ref().unwrap().to_string();
@@ -114,12 +139,12 @@ fn body_tt(fields: &Fields, global_ignore: &Option<container::Ignore>) -> Result
                                 if #cond_value {
                                     field_was_ignored = true;
                                 } else {
-                                    debug.field(#field_name_str, #wrapped_field);
+                                    debug.field(#field_name_str, &#field_tokens);
                                 }
                             }
                         }
                         None => quote! {
-                            debug.field(#field_name_str, #wrapped_field);
+                            debug.field(#field_name_str, &#field_tokens);
                         },
                     };
                     Ok(field_tokens)
