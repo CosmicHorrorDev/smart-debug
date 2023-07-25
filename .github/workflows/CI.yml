@@ -1,5 +1,6 @@
 # TODO: switch to rust-toolchain action
 # TODO: use cache action
+# TODO: run on stable and beta
 
 name: CI
 

@@ -11,6 +11,8 @@ use std::fmt;
 struct Text {
     #[debug(no_ignore)]
     text: &'static str,
+    #[debug("0x{:06x}")]
+    color: u32,
     #[debug(wrapper = DebugInline)]
     hyperlink: Option<&'static str>,
     is_bold: bool,
@@ -26,22 +28,26 @@ impl<T: fmt::Debug> fmt::Debug for DebugInline<'_, T> {
     }
 }
 
-const EXPECTED: &str = r#"
+const HYPERLINK: &str = r#"
 Text {
     text: "Look! A link",
+    color: 0x005cc5,
     hyperlink: Some("https://example.org"),
+    is_italics: true,
     ..
 }
 "#;
 
 fn main() {
-    let text = Text {
+    let hyperlink = Text {
         text: "Look! A link",
         hyperlink: Some("https://example.org"),
+        color: 0x00_5c_c5,
+        is_italics: true,
         ..Text::default()
     };
 
-    let formatted = format!("\n{text:#?}\n");
-    assert_eq!(formatted, EXPECTED);
+    let formatted = format!("\n{hyperlink:#?}\n");
+    assert_eq!(formatted, HYPERLINK);
 }
 ```
