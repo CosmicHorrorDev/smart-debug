@@ -56,7 +56,9 @@ impl TryFrom<Vec<Attr>> for Attrs {
                     let value = value.unwrap();
                     match valuefull {
                         ValuefullName::Bare => {
-                            let AttrValue::LitStr(lit) = value else { unreachable!() };
+                            let AttrValue::LitStr(lit) = value else {
+                                unreachable!()
+                            };
                             attrs.bare = Some(lit);
                         }
                     }
