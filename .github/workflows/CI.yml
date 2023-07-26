@@ -1,7 +1,3 @@
-# TODO: switch to rust-toolchain action
-# TODO: use cache action
-# TODO: run on stable and beta
-
 name: CI
 
 on: [push, pull_request]
@@ -14,12 +10,20 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-latest]
-
-    runs-on: ${{ matrix.os }}
+        toolchain: [stable, beta]
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v3
+
+      - name: Install ${{ matrix.toolchain }} toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          components: clippy, rustfmt
+
+      - name: Restore cache
+        uses: Swatinem/rust-cache@v2
 
       - name: Formatting
         run: cargo fmt --all -- --check
