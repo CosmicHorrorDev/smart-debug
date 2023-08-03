@@ -63,7 +63,7 @@ fn kitchen_sink() {
 fn format_str() {
     #[derive(Serialize, SmartDebug, Default)]
     struct FormatStrs {
-        #[debug("0x{:x}")]
+        #[debug("{:#x}")]
         hex: u64,
         #[debug("{}")]
         display: &'static str,

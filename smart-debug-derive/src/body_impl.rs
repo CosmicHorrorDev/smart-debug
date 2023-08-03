@@ -118,9 +118,7 @@ fn body_tt(fields: &Fields, global_ignore: &Option<container::Ignore>) -> Result
                             // Use `format_args!()` if it's an interpolated str
                             if has_interpol {
                                 quote! {
-                                    ::smart_debug::wrappers::__private::__DebugArgs(
-                                        format_args!(#bare, &self.#field_name)
-                                    )
+                                    ::std::format_args!(#bare, &self.#field_name)
                                 }
                             } else {
                                 quote! { &#bare }
