@@ -4,6 +4,7 @@ use syn::{parse_macro_input, DeriveInput};
 
 mod attr;
 mod body_impl;
+mod utils;
 
 /// Derive macro for deriving [`Debug`] with easier customization
 #[proc_macro_derive(SmartDebug, attributes(debug))]

@@ -1,0 +1,11 @@
+---
+source: tests/tests.rs
+expression: global_ignore
+info:
+  - ~
+  - ~
+---
+GlobalIgnore(
+    _,
+    _,
+)

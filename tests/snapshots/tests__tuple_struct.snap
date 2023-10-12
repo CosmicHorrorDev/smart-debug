@@ -1,0 +1,11 @@
+---
+source: tests/tests.rs
+expression: tuple
+info:
+  - false
+  - 0
+---
+Tuple(
+    false,
+    0,
+)

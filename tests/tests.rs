@@ -16,7 +16,7 @@ fn basic() {
     };
 
     insta::with_settings!({ info => &basic }, {
-        insta::assert_debug_snapshot!(basic)
+        insta::assert_debug_snapshot!(basic);
     });
 }
 
@@ -55,7 +55,7 @@ fn kitchen_sink() {
     };
 
     insta::with_settings!({ info => &kitchen_sink }, {
-        insta::assert_debug_snapshot!(kitchen_sink)
+        insta::assert_debug_snapshot!(kitchen_sink);
     });
 }
 
@@ -74,10 +74,63 @@ fn format_str() {
     let format_strs = FormatStrs {
         hex: 0x1234abcd,
         display: "You'll see unescaped quotes -> \"\"\"",
-        just_text: (),
+        ..Default::default()
     };
 
     insta::with_settings!({ info => &format_strs }, {
         insta::assert_debug_snapshot!(format_strs)
+    });
+}
+
+#[test]
+fn unit_struct() {
+    #[derive(Serialize, SmartDebug)]
+    struct Unit;
+
+    let unit = Unit;
+
+    insta::with_settings!({ info => &unit }, {
+        insta::assert_debug_snapshot!(unit);
+    });
+}
+
+#[test]
+fn tuple_struct() {
+    #[derive(Serialize, SmartDebug, Default)]
+    struct Tuple(bool, u8);
+
+    let tuple = Tuple::default();
+
+    insta::with_settings!({info => &tuple}, {
+        insta::assert_debug_snapshot!(tuple);
+    });
+
+    #[derive(Serialize, SmartDebug, Default)]
+    #[debug(ignore)]
+    struct GlobalIgnore((), ());
+
+    let global_ignore = GlobalIgnore::default();
+
+    insta::with_settings!({ info => &global_ignore }, {
+        insta::assert_debug_snapshot!(global_ignore);
+    });
+
+    #[derive(Serialize, SmartDebug)]
+    #[debug(ignore)]
+    struct GlobalIgnoreWithLocalOverride(#[debug(no_ignore)] &'static str, ());
+
+    let global_w_local = GlobalIgnoreWithLocalOverride("Local override", ());
+
+    insta::with_settings!({ info => &global_w_local }, {
+        insta::assert_debug_snapshot!(global_w_local);
+    });
+
+    #[derive(Serialize, SmartDebug, Default)]
+    struct FirstFieldIgnored(#[debug(ignore)] (), ());
+
+    let first_field_ignored = FirstFieldIgnored::default();
+
+    insta::with_settings!({ info => &first_field_ignored }, {
+        insta::assert_debug_snapshot!(first_field_ignored);
     });
 }

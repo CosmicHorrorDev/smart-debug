@@ -1,0 +1,11 @@
+---
+source: tests/tests.rs
+expression: first_field_ignored
+info:
+  - ~
+  - ~
+---
+FirstFieldIgnored(
+    _,
+    (),
+)

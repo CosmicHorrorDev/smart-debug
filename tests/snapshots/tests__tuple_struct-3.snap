@@ -1,0 +1,11 @@
+---
+source: tests/tests.rs
+expression: global_w_local
+info:
+  - Local override
+  - ~
+---
+GlobalIgnoreWithLocalOverride(
+    "Local override",
+    _,
+)
