@@ -1,0 +1,5 @@
+---
+source: tests/tests.rs
+expression: struct_
+---
+This is a custom debug repr
