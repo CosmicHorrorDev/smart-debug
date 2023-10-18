@@ -9,5 +9,5 @@ info:
 FormatStrs {
     hex: 0x1234abcd,
     display: You'll see unescaped quotes -> """,
-    just_text: "I am the text",
+    just_text: I am the text,
 }

@@ -12,29 +12,32 @@ pub fn impl_derive(input: &DeriveInput) -> Result<TokenStream> {
     let name_lit_str = name.to_string();
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
 
-    let container_attrs = container::Attrs::parse(&input.attrs)?;
-    let (body_expr, struct_kind) = match &input.data {
-        syn::Data::Struct(body) => body_tt(&body.fields, &container_attrs.ignore)?,
-        _ => todo!("Only structs are currently supported"),
-    };
+    let container::Attrs {
+        ignore: container_ignore,
+        bare: container_bare,
+    } = container::Attrs::parse(&input.attrs)?;
 
-    let container_defaults = match container_attrs.ignore {
-        None | Some(container::Ignore::Bare) => TokenStream::new(),
-        Some(container::Ignore::Defaults) => quote! { let container_default = <#name>::default(); },
-    };
+    let fn_body = match container_bare {
+        Some(lit_str) => quote! { f.write_str(#lit_str) },
+        None => {
+            let (body_expr, struct_kind) = match &input.data {
+                syn::Data::Struct(body) => body_tt(&body.fields, &container_ignore)?,
+                _ => todo!("Only structs are currently supported"),
+            };
 
-    // TODO: dedupe logic from the match arms
-    let debug_impl = match struct_kind {
-        StructKind::NonTuple => {
-            quote! {
-                impl #impl_generics ::std::fmt::Debug for #name #ty_generics #where_clause {
-                    fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
+            let container_defaults = match container_ignore {
+                None | Some(container::Ignore::Bare) => TokenStream::new(),
+                Some(container::Ignore::Defaults) => {
+                    quote! { let container_default = <#name>::default(); }
+                }
+            };
+
+            let formatting_code = match struct_kind {
+                StructKind::NonTuple => {
+                    quote! {
                         let mut debug = f.debug_struct(#name_lit_str);
                         let mut field_was_ignored = false;
-                        #container_defaults
-
                         #body_expr
-
                         if field_was_ignored {
                             debug.finish_non_exhaustive()
                         } else {
@@ -42,20 +45,26 @@ pub fn impl_derive(input: &DeriveInput) -> Result<TokenStream> {
                         }
                     }
                 }
-            }
-        }
-        StructKind::Tuple => {
-            quote! {
-                impl #impl_generics ::std::fmt::Debug for #name #ty_generics #where_clause {
-                    fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
+                StructKind::Tuple => {
+                    quote! {
                         let mut debug = f.debug_tuple(#name_lit_str);
-                        #container_defaults
-
                         #body_expr
-
                         debug.finish()
                     }
                 }
+            };
+
+            quote! {
+                #container_defaults
+                #formatting_code
+            }
+        }
+    };
+
+    let debug_impl = quote! {
+        impl #impl_generics ::std::fmt::Debug for #name #ty_generics #where_clause {
+            fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
+                #fn_body
             }
         }
     };
@@ -93,6 +102,8 @@ enum StructKind {
     Tuple,
 }
 
+// TODO: the generated code here could be better by avoiding some code in different situations
+// TODO: the regular struct and tuple struct arms could share more code
 fn body_tt(
     fields: &Fields,
     global_ignore: &Option<container::Ignore>,
@@ -129,12 +140,13 @@ fn body_tt(
                             let has_interpol = utils::needs_formatting(&bare.value());
 
                             // Use `format_args!()` if it's an interpolated str
-                            if has_interpol {
-                                quote! {
-                                    ::std::format_args!(#bare, &self.#field_name)
-                                }
+                            let args = if has_interpol {
+                                quote! { #bare, &self.#field_name }
                             } else {
-                                quote! { &#bare }
+                                quote! { #bare }
+                            };
+                            quote! {
+                                ::smart_debug::internal::__LiteralField(::std::format_args!(#args))
                             }
                         }
                         Some(field::BareOrWrapper::Wrapper(wrapper)) => {
@@ -194,10 +206,13 @@ fn body_tt(
                             let has_interpol = utils::needs_formatting(&bare.value());
 
                             // Use `format_args!()` if it's an interpolated str
-                            if has_interpol {
-                                quote! { ::std::format_args!(#bare, &self.#field_name) }
+                            let args = if has_interpol {
+                                quote! { #bare, &self.#field_name }
                             } else {
-                                quote! { &#bare }
+                                quote! { #bare }
+                            };
+                            quote! {
+                                ::smart_debug::internal::__LiteralField(::std::format_args!(#args))
                             }
                         }
                         Some(field::BareOrWrapper::Wrapper(wrapper)) => {
@@ -208,7 +223,7 @@ fn body_tt(
 
                     let field_tokens = quote! {
                         if #cond {
-                            debug.field(&::smart_debug::__IgnoredTupleStructField);
+                            debug.field(&::smart_debug::internal::__IgnoredTupleField);
                         } else {
                             debug.field(&#field_tokens);
                         }

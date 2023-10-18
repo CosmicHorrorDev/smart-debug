@@ -13,7 +13,7 @@ info:
 KitchenSink {
     no_ignore_displayed: (),
     ignore_if_displayed: false,
-    password_is_hidden: "<hidden>",
+    password_is_hidden: <hidden>,
     wrapped_display: Wrapped,
     ..
 }

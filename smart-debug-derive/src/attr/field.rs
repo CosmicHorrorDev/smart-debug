@@ -171,7 +171,6 @@ pub enum ValuelessName {
 impl AttrName {
     fn new(ident: Ident) -> Option<Self> {
         let name = match ident.to_string().as_str() {
-            "bare" => Self::Valuefull(ValuefullName::Bare),
             "no_ignore" => Self::Valueless(ValuelessName::NoIgnore),
             "ignore_default" => Self::Valueless(ValuelessName::IgnoreDefault),
             "ignore" => Self::Valueless(ValuelessName::Ignore),

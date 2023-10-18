@@ -134,3 +134,16 @@ fn tuple_struct() {
         insta::assert_debug_snapshot!(first_field_ignored);
     });
 }
+
+#[test]
+fn container_lit_str() {
+    #[derive(Serialize, SmartDebug)]
+    #[debug("This is a custom debug repr")]
+    struct CustomDebugRepr;
+
+    let custom = CustomDebugRepr;
+
+    insta::with_settings!({ info => &custom }, {
+        insta::assert_debug_snapshot!(custom);
+    });
+}
