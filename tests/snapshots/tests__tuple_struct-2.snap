@@ -1,11 +1,11 @@
 ---
 source: tests/tests.rs
-expression: global_ignore
+expression: global_skip
 info:
   - ~
   - ~
 ---
-GlobalIgnore(
+GlobalSkip(
     _,
     _,
 )

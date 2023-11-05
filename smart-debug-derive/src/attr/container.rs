@@ -8,7 +8,7 @@ use syn::{
 };
 
 #[derive(Clone, Debug)]
-pub enum Ignore {
+pub enum Skip {
     Bare,
     Defaults,
 }
@@ -16,7 +16,7 @@ pub enum Ignore {
 #[derive(Clone, Debug, Default)]
 pub struct Attrs {
     pub bare: Option<LitStr>,
-    pub ignore: Option<Ignore>,
+    pub skip: Option<Skip>,
 }
 
 impl Attrs {
@@ -44,9 +44,9 @@ impl TryFrom<Vec<Attr>> for Attrs {
                 AttrName::Valuefull(ValuefullName::Bare) => {
                     assert!(attrs.bare.is_none());
                 }
-                AttrName::Valueless(ValuelessName::Ignore)
-                | AttrName::Valueless(ValuelessName::IgnoreDefaults) => {
-                    assert!(attrs.ignore.is_none());
+                AttrName::Valueless(ValuelessName::Skip)
+                | AttrName::Valueless(ValuelessName::SkipDefaults) => {
+                    assert!(attrs.skip.is_none());
                 }
             }
 
@@ -64,8 +64,8 @@ impl TryFrom<Vec<Attr>> for Attrs {
                     }
                 }
                 AttrName::Valueless(valueless) => match valueless {
-                    ValuelessName::Ignore => attrs.ignore = Some(Ignore::Bare),
-                    ValuelessName::IgnoreDefaults => attrs.ignore = Some(Ignore::Defaults),
+                    ValuelessName::Skip => attrs.skip = Some(Skip::Bare),
+                    ValuelessName::SkipDefaults => attrs.skip = Some(Skip::Defaults),
                 },
             }
         }
@@ -137,15 +137,15 @@ pub enum ValuefullName {
 
 #[derive(Clone, Debug)]
 pub enum ValuelessName {
-    Ignore,
-    IgnoreDefaults,
+    Skip,
+    SkipDefaults,
 }
 
 impl AttrName {
     fn new(ident: Ident) -> Option<Self> {
         let name = match ident.to_string().as_str() {
-            "ignore" => Self::Valueless(ValuelessName::Ignore),
-            "ignore_defaults" => Self::Valueless(ValuelessName::IgnoreDefaults),
+            "skip" => Self::Valueless(ValuelessName::Skip),
+            "skip_defaults" => Self::Valueless(ValuelessName::SkipDefaults),
             _ => return None,
         };
 

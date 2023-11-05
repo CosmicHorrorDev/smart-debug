@@ -1,11 +1,11 @@
 ---
 source: tests/tests.rs
-expression: first_field_ignored
+expression: first_field_skipped
 info:
   - ~
   - ~
 ---
-FirstFieldIgnored(
+FirstFieldSkipped(
     _,
     (),
 )

@@ -13,7 +13,7 @@ pub fn impl_derive(input: &DeriveInput) -> Result<TokenStream> {
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
 
     let container::Attrs {
-        ignore: container_ignore,
+        skip: container_skip,
         bare: container_bare,
     } = container::Attrs::parse(&input.attrs)?;
 
@@ -21,13 +21,13 @@ pub fn impl_derive(input: &DeriveInput) -> Result<TokenStream> {
         Some(lit_str) => quote! { f.write_str(#lit_str) },
         None => {
             let (body_expr, struct_kind) = match &input.data {
-                syn::Data::Struct(body) => body_tt(&body.fields, &container_ignore)?,
+                syn::Data::Struct(body) => body_tt(&body.fields, &container_skip)?,
                 _ => todo!("Only structs are currently supported"),
             };
 
-            let container_defaults = match container_ignore {
-                None | Some(container::Ignore::Bare) => TokenStream::new(),
-                Some(container::Ignore::Defaults) => {
+            let container_defaults = match container_skip {
+                None | Some(container::Skip::Bare) => TokenStream::new(),
+                Some(container::Skip::Defaults) => {
                     quote! { let container_default = <#name>::default(); }
                 }
             };
@@ -36,9 +36,9 @@ pub fn impl_derive(input: &DeriveInput) -> Result<TokenStream> {
                 StructKind::NonTuple => {
                     quote! {
                         let mut debug = f.debug_struct(#name_lit_str);
-                        let mut field_was_ignored = false;
+                        let mut field_was_skipped = false;
                         #body_expr
-                        if field_was_ignored {
+                        if field_was_skipped {
                             debug.finish_non_exhaustive()
                         } else {
                             debug.finish()
@@ -72,7 +72,7 @@ pub fn impl_derive(input: &DeriveInput) -> Result<TokenStream> {
     Ok(debug_impl)
 }
 
-enum Ignore {
+enum Skip {
     No,
     Unconditional,
     Default,
@@ -81,18 +81,18 @@ enum Ignore {
     Fn(field::AttrValue),
 }
 
-impl Ignore {
+impl Skip {
     // local takes precedence over global
-    fn new(global: &Option<container::Ignore>, local: Option<field::Ignore>) -> Self {
+    fn new(global: &Option<container::Skip>, local: Option<field::Skip>) -> Self {
         match (global, local) {
-            (_, Some(field::Ignore::No)) | (None, None) => Self::No,
-            (Some(container::Ignore::Bare), None) | (_, Some(field::Ignore::Bare)) => {
+            (_, Some(field::Skip::No)) | (None, None) => Self::No,
+            (Some(container::Skip::Bare), None) | (_, Some(field::Skip::Bare)) => {
                 Self::Unconditional
             }
-            (Some(container::Ignore::Defaults), None) => Self::DefaultGlobal,
-            (_, Some(field::Ignore::Default)) => Self::Default,
-            (_, Some(field::Ignore::If(value))) => Self::If(value),
-            (_, Some(field::Ignore::Fn(value))) => Self::Fn(value),
+            (Some(container::Skip::Defaults), None) => Self::DefaultGlobal,
+            (_, Some(field::Skip::Default)) => Self::Default,
+            (_, Some(field::Skip::If(value))) => Self::If(value),
+            (_, Some(field::Skip::Fn(value))) => Self::Fn(value),
         }
     }
 }
@@ -106,7 +106,7 @@ enum StructKind {
 // TODO: the regular struct and tuple struct arms could share more code
 fn body_tt(
     fields: &Fields,
-    global_ignore: &Option<container::Ignore>,
+    global_skip: &Option<container::Skip>,
 ) -> Result<(TokenStream, StructKind)> {
     match fields {
         Fields::Named(FieldsNamed { named, .. }) => {
@@ -116,23 +116,23 @@ fn body_tt(
                     let field_name = &field.ident;
                     let field::Attrs {
                         bare_or_wrapper,
-                        ignore: field_ignore,
+                        skip: field_skip,
                     } = field::Attrs::parse(&field.attrs)?;
-                    let ignore = Ignore::new(global_ignore, field_ignore);
-                    let maybe_cond = match ignore {
-                        Ignore::No => None,
-                        Ignore::Unconditional => {
-                            return Ok(quote! { field_was_ignored = true; });
+                    let skip = Skip::new(global_skip, field_skip);
+                    let maybe_cond = match skip {
+                        Skip::No => None,
+                        Skip::Unconditional => {
+                            return Ok(quote! { field_was_skipped = true; });
                         }
-                        Ignore::Default => {
+                        Skip::Default => {
                             let ty = field.ty.to_owned();
                             Some(quote! { self.#field_name == <#ty>::default() })
                         }
-                        Ignore::DefaultGlobal => {
+                        Skip::DefaultGlobal => {
                             Some(quote! { self.#field_name == container_default.#field_name })
                         }
-                        Ignore::If(value) => Some(quote! { self.#field_name == #value }),
-                        Ignore::Fn(value) => Some(quote! { #value(&self.#field_name) }),
+                        Skip::If(value) => Some(quote! { self.#field_name == #value }),
+                        Skip::Fn(value) => Some(quote! { #value(&self.#field_name) }),
                     };
 
                     let field_tokens = match bare_or_wrapper {
@@ -160,7 +160,7 @@ fn body_tt(
                         Some(cond_value) => {
                             quote! {
                                 if #cond_value {
-                                    field_was_ignored = true;
+                                    field_was_skipped = true;
                                 } else {
                                     debug.field(#field_name_str, &#field_tokens);
                                 }
@@ -184,21 +184,21 @@ fn body_tt(
                     let field_name = syn::Index::from(field_num);
                     let field::Attrs {
                         bare_or_wrapper,
-                        ignore: field_ignore,
+                        skip: field_skip,
                     } = field::Attrs::parse(&field.attrs)?;
-                    let ignore = Ignore::new(global_ignore, field_ignore);
-                    let cond = match ignore {
-                        Ignore::No => quote! { false },
-                        Ignore::Unconditional => quote! { true },
-                        Ignore::Default => {
+                    let skip = Skip::new(global_skip, field_skip);
+                    let cond = match skip {
+                        Skip::No => quote! { false },
+                        Skip::Unconditional => quote! { true },
+                        Skip::Default => {
                             let ty = field.ty.to_owned();
                             quote! { self.#field_name == <#ty>::default() }
                         }
-                        Ignore::DefaultGlobal => {
+                        Skip::DefaultGlobal => {
                             quote! { self.#field_name == container_default.#field_name }
                         }
-                        Ignore::If(value) => quote! { self.#field_name == #value },
-                        Ignore::Fn(value) => quote! { #value(&self.#field_name) },
+                        Skip::If(value) => quote! { self.#field_name == #value },
+                        Skip::Fn(value) => quote! { #value(&self.#field_name) },
                     };
 
                     let field_tokens = match bare_or_wrapper {
@@ -223,7 +223,7 @@ fn body_tt(
 
                     let field_tokens = quote! {
                         if #cond {
-                            debug.field(&::smart_debug::internal::__IgnoredTupleField);
+                            debug.field(&::smart_debug::internal::__SkippedTupleField);
                         } else {
                             debug.field(&#field_tokens);
                         }

@@ -13,7 +13,7 @@ use syn::{
 #[derive(Clone, Debug, Default)]
 pub struct Attrs {
     pub bare_or_wrapper: Option<BareOrWrapper>,
-    pub ignore: Option<Ignore>,
+    pub skip: Option<Skip>,
 }
 
 #[derive(Clone, Debug)]
@@ -23,7 +23,7 @@ pub enum BareOrWrapper {
 }
 
 #[derive(Clone, Debug)]
-pub enum Ignore {
+pub enum Skip {
     No,
     Bare,
     Default,
@@ -57,10 +57,10 @@ impl TryFrom<Vec<Attr>> for Attrs {
                     assert!(attrs.bare_or_wrapper.is_none());
                 }
                 AttrName::Valueless(
-                    ValuelessName::Ignore | ValuelessName::IgnoreDefault | ValuelessName::NoIgnore,
+                    ValuelessName::Skip | ValuelessName::SkipDefault | ValuelessName::NoSkip,
                 )
-                | AttrName::Valuefull(ValuefullName::IgnoreFn | ValuefullName::IgnoreIf) => {
-                    assert!(attrs.ignore.is_none());
+                | AttrName::Valuefull(ValuefullName::SkipFn | ValuefullName::SkipIf) => {
+                    assert!(attrs.skip.is_none());
                 }
                 AttrName::Valuefull(ValuefullName::Wrapper) => {
                     assert!(attrs.bare_or_wrapper.is_none());
@@ -78,17 +78,17 @@ impl TryFrom<Vec<Attr>> for Attrs {
                             };
                             attrs.bare_or_wrapper = Some(BareOrWrapper::Bare(lit));
                         }
-                        ValuefullName::IgnoreFn => attrs.ignore = Some(Ignore::Fn(value)),
-                        ValuefullName::IgnoreIf => attrs.ignore = Some(Ignore::If(value)),
+                        ValuefullName::SkipFn => attrs.skip = Some(Skip::Fn(value)),
+                        ValuefullName::SkipIf => attrs.skip = Some(Skip::If(value)),
                         ValuefullName::Wrapper => {
                             attrs.bare_or_wrapper = Some(BareOrWrapper::Wrapper(value));
                         }
                     }
                 }
                 AttrName::Valueless(valueless) => match valueless {
-                    ValuelessName::Ignore => attrs.ignore = Some(Ignore::Bare),
-                    ValuelessName::IgnoreDefault => attrs.ignore = Some(Ignore::Default),
-                    ValuelessName::NoIgnore => attrs.ignore = Some(Ignore::No),
+                    ValuelessName::Skip => attrs.skip = Some(Skip::Bare),
+                    ValuelessName::SkipDefault => attrs.skip = Some(Skip::Default),
+                    ValuelessName::NoSkip => attrs.skip = Some(Skip::No),
                 },
             }
         }
@@ -156,26 +156,26 @@ pub enum AttrName {
 #[derive(Clone, Debug)]
 pub enum ValuefullName {
     Bare,
-    IgnoreFn,
-    IgnoreIf,
+    SkipFn,
+    SkipIf,
     Wrapper,
 }
 
 #[derive(Clone, Debug)]
 pub enum ValuelessName {
-    NoIgnore,
-    Ignore,
-    IgnoreDefault,
+    NoSkip,
+    Skip,
+    SkipDefault,
 }
 
 impl AttrName {
     fn new(ident: Ident) -> Option<Self> {
         let name = match ident.to_string().as_str() {
-            "no_ignore" => Self::Valueless(ValuelessName::NoIgnore),
-            "ignore_default" => Self::Valueless(ValuelessName::IgnoreDefault),
-            "ignore" => Self::Valueless(ValuelessName::Ignore),
-            "ignore_fn" => Self::Valuefull(ValuefullName::IgnoreFn),
-            "ignore_if" => Self::Valuefull(ValuefullName::IgnoreIf),
+            "no_skip" => Self::Valueless(ValuelessName::NoSkip),
+            "skip_default" => Self::Valueless(ValuelessName::SkipDefault),
+            "skip" => Self::Valueless(ValuelessName::Skip),
+            "skip_fn" => Self::Valuefull(ValuefullName::SkipFn),
+            "skip_if" => Self::Valuefull(ValuefullName::SkipIf),
             "wrapper" => Self::Valuefull(ValuefullName::Wrapper),
             _ => return None,
         };

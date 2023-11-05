@@ -5,7 +5,7 @@ info:
   - Local override
   - ~
 ---
-GlobalIgnoreWithLocalOverride(
+GlobalSkipWithLocalOverride(
     "Local override",
     _,
 )

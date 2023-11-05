@@ -7,9 +7,9 @@ use smart_debug::SmartDebug;
 use std::fmt;
 
 #[derive(SmartDebug, Default)]
-#[debug(ignore_defaults)]
+#[debug(skip_defaults)]
 struct Text {
-    #[debug(no_ignore)]
+    #[debug(no_skip)]
     text: &'static str,
     #[debug("0x{:06x}")]
     color: u32,

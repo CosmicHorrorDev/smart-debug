@@ -1,7 +1,6 @@
 // TODO: include compile tests to test for error messages when it fails to build. dtolnay has some
 //       library for it already
 // TODO: should `debug("Blah")` be `Blah` or `"Blah"` when formatted?
-// TODO: rename ignore -> skip
 // TODO: definitely need to check error messages to make sure that the error spans for things make
 //       sense
 // TODO: Get wrapper working as a container attr
@@ -15,9 +14,9 @@ pub use smart_debug_derive::SmartDebug;
 pub mod internal {
     use std::fmt;
 
-    pub struct __IgnoredTupleField;
+    pub struct __SkippedTupleField;
 
-    impl fmt::Debug for __IgnoredTupleField {
+    impl fmt::Debug for __SkippedTupleField {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             // Specifics of the formatting target shouldn't matter here since it's always `_`
             write!(f, "{:?}", __LiteralField(format_args!("_")))

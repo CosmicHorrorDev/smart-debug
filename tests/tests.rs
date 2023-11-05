@@ -4,7 +4,7 @@ use smart_debug::SmartDebug;
 #[test]
 fn basic() {
     #[derive(Serialize, SmartDebug, Default)]
-    #[debug(ignore_defaults)]
+    #[debug(skip_defaults)]
     struct Basic {
         default: bool,
         not_default: bool,
@@ -31,17 +31,17 @@ fn kitchen_sink() {
     }
 
     #[derive(Serialize, SmartDebug, Default)]
-    #[debug(ignore_defaults)]
+    #[debug(skip_defaults)]
     struct KitchenSink {
-        default_ignored: (),
-        #[debug(ignore)]
-        ignore_ignored: (),
-        #[debug(no_ignore)]
-        no_ignore_displayed: (),
-        #[debug(ignore_if = false)]
-        ignore_if_ignored: bool,
-        #[debug(ignore_if = true)]
-        ignore_if_displayed: bool,
+        default_skipped: (),
+        #[debug(skip)]
+        skip_skipped: (),
+        #[debug(no_skip)]
+        no_skip_displayed: (),
+        #[debug(skip_if = false)]
+        skip_if_skipped: bool,
+        #[debug(skip_if = true)]
+        skip_if_displayed: bool,
         #[debug("<hidden>")]
         password_is_hidden: &'static str,
         #[debug(wrapper = Wrapper)]
@@ -106,32 +106,32 @@ fn tuple_struct() {
     });
 
     #[derive(Serialize, SmartDebug, Default)]
-    #[debug(ignore)]
-    struct GlobalIgnore((), ());
+    #[debug(skip)]
+    struct GlobalSkip((), ());
 
-    let global_ignore = GlobalIgnore::default();
+    let global_skip = GlobalSkip::default();
 
-    insta::with_settings!({ info => &global_ignore }, {
-        insta::assert_debug_snapshot!(global_ignore);
+    insta::with_settings!({ info => &global_skip }, {
+        insta::assert_debug_snapshot!(global_skip);
     });
 
     #[derive(Serialize, SmartDebug)]
-    #[debug(ignore)]
-    struct GlobalIgnoreWithLocalOverride(#[debug(no_ignore)] &'static str, ());
+    #[debug(skip)]
+    struct GlobalSkipWithLocalOverride(#[debug(no_skip)] &'static str, ());
 
-    let global_w_local = GlobalIgnoreWithLocalOverride("Local override", ());
+    let global_w_local = GlobalSkipWithLocalOverride("Local override", ());
 
     insta::with_settings!({ info => &global_w_local }, {
         insta::assert_debug_snapshot!(global_w_local);
     });
 
     #[derive(Serialize, SmartDebug, Default)]
-    struct FirstFieldIgnored(#[debug(ignore)] (), ());
+    struct FirstFieldSkipped(#[debug(skip)] (), ());
 
-    let first_field_ignored = FirstFieldIgnored::default();
+    let first_field_skipped = FirstFieldSkipped::default();
 
-    insta::with_settings!({ info => &first_field_ignored }, {
-        insta::assert_debug_snapshot!(first_field_ignored);
+    insta::with_settings!({ info => &first_field_skipped }, {
+        insta::assert_debug_snapshot!(first_field_skipped);
     });
 }
 
