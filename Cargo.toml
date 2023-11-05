@@ -6,7 +6,7 @@ members = [
 
 [package]
 name = "smart-debug"
-version = "0.0.2"
+version = "0.0.3"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 rust-version = "1.65.0"
@@ -17,7 +17,7 @@ repository = "https://github.com/CosmicHorrorDev/smart-debug"
 homepage = "https://github.com/CosmicHorrorDev/smart-debug"
 
 [dependencies]
-smart-debug-derive = { path = "./smart-debug-derive", version = "0.0.2" }
+smart-debug-derive = { path = "./smart-debug-derive", version = "0.0.3" }
 
 [dev-dependencies]
 insta = { version = "1.31.0", features = ["serde"] }
