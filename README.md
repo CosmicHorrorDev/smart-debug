@@ -1,3 +1,12 @@
+> [!IMPORTANT]
+> Moved to codeberg :)
+>
+> <https://codeberg.org/CosmicHarper/smart-debug>
+
+---
+
+<!-- TODO: switch the example to use a wrapper for the color and inline string
+for the hyperlink -->
 **⚠️ !!This is currently pre-alpha software!! ⚠️**
 
 Allows for easy manipulation of debug formatting through a derive macro
